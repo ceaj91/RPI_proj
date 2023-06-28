@@ -8,10 +8,38 @@
 
 uint16_t pulses[100][2];
 uint8_t currentpulse = 0;
+char filename[100];
+char commandname[100];
 
 void setup() {
     std::cout << "Ready to decode IR!" << std::endl;
     wiringPiSetup();
+	printf("Unesite ime uredjaja : ");
+	scanf("%s", filename);
+	printf("\nUnesite naziv komande : ")
+	scanf("%s", commandname);
+	printf("\n");
+}
+
+
+void printToFile(){
+	FILE *file;
+	file = fopen(filename, "a+");
+    if (file == NULL){
+        printf("Error opening the file.\n");
+        return 1;
+    }
+
+	fprintf(file, "int %s[] = {\n",commandname);
+    for (uint8_t i = 0; i < currentpulse - 1; i++) {
+		fprintf(file, "pulseIR(%d);\n",pulses[i][1] * RESOLUTION);
+		fprintf(file, "delayMicroseconds(%d);\n",pulses[i + 1][0] * RESOLUTION);
+      //  std::cout << "pulseIR(" << pulses[i][1] * RESOLUTION << ");" << std::
+      //  std::cout << "delayMicroseconds(" << pulses[i + 1][0] * RESOLUTION << ");" << std::endl;
+    }
+	
+	fprintf(file, "pulseIR(%d);\n", pulses[currentpulse - 1][1] * RESOLUTION );
+    //std::cout << "pulseIR(" << pulses[currentpulse - 1][1] * RESOLUTION << ");" << std::endl;
 }
 
 void loop() {
@@ -23,6 +51,7 @@ void loop() {
         delayMicroseconds(RESOLUTION);
 
         if ((highpulse >= MAXPULSE) && (currentpulse != 0)) {
+			printToFile();
             printPulses();
             currentpulse = 0;
             return;
@@ -36,6 +65,7 @@ void loop() {
         delayMicroseconds(RESOLUTION);
 
         if ((lowpulse >= MAXPULSE) && (currentpulse != 0)) {
+			printToFile();
             printPulses();
             currentpulse = 0;
             return;
