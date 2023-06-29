@@ -1,7 +1,7 @@
 #include <wiringPi.h>
 #include <iostream>
 
-#define IRpin 2
+#define IRpin 4
 
 #define MAXPULSE 65000
 #define RESOLUTION 20
@@ -16,12 +16,27 @@ void setup() {
     wiringPiSetup();
 	printf("Unesite ime uredjaja : ");
 	scanf("%s", filename);
-	printf("\nUnesite naziv komande : ")
+	printf("Unesite naziv komande : ")
 	scanf("%s", commandname);
-	printf("\n");
 }
 
+void printPulses() {
+    std::cout << "\nReceived: \nOFF \tON" << std::endl;
+    
+    for (uint8_t i = 0; i < currentpulse; i++) {
+        std::cout << pulses[i][0] * RESOLUTION << " usec, " << pulses[i][1] * RESOLUTION << " usec" << std::endl;
+    }
 
+    std::cout << "int IRsignal[] = {" << std::endl;
+    std::cout << "// ON, OFF " << std::endl;
+
+    for (uint8_t i = 0; i < currentpulse - 1; i++) {
+        std::cout << "pulseIR(" << pulses[i][1] * RESOLUTION << ");" << std::endl;
+        std::cout << "delayMicroseconds(" << pulses[i + 1][0] * RESOLUTION << ");" << std::endl;
+    }
+
+    std::cout << "pulseIR(" << pulses[currentpulse - 1][1] * RESOLUTION << ");" << std::endl;
+}
 void printToFile(){
 	FILE *file;
 	file = fopen(filename, "a+");
@@ -39,6 +54,7 @@ void printToFile(){
     }
 	
 	fprintf(file, "pulseIR(%d);\n", pulses[currentpulse - 1][1] * RESOLUTION );
+    fprintf(file, "}\n");
     //std::cout << "pulseIR(" << pulses[currentpulse - 1][1] * RESOLUTION << ");" << std::endl;
 }
 
@@ -77,23 +93,7 @@ void loop() {
     currentpulse++;
 }
 
-void printPulses() {
-    std::cout << "\nReceived: \nOFF \tON" << std::endl;
-    
-    for (uint8_t i = 0; i < currentpulse; i++) {
-        std::cout << pulses[i][0] * RESOLUTION << " usec, " << pulses[i][1] * RESOLUTION << " usec" << std::endl;
-    }
 
-    std::cout << "int IRsignal[] = {" << std::endl;
-    std::cout << "// ON, OFF " << std::endl;
-
-    for (uint8_t i = 0; i < currentpulse - 1; i++) {
-        std::cout << "pulseIR(" << pulses[i][1] * RESOLUTION << ");" << std::endl;
-        std::cout << "delayMicroseconds(" << pulses[i + 1][0] * RESOLUTION << ");" << std::endl;
-    }
-
-    std::cout << "pulseIR(" << pulses[currentpulse - 1][1] * RESOLUTION << ");" << std::endl;
-}
 
 int main() {
     setup();
