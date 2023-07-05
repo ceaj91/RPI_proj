@@ -5,8 +5,9 @@
 #include <QInputDialog>
 #include <QLineEdit>
 #include "form.h"
-#include <wiringPi.h>
 
+#define IRpin_sensor 4
+#define IRpin_diode 1
 QT_BEGIN_NAMESPACE
 namespace Ui { class Dialog; }
 QT_END_NAMESPACE

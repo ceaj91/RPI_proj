@@ -1,6 +1,8 @@
 #include "form.h"
 #include "ui_form.h"
 #include <string.h>
+#include <wiringPi.h>
+
 
 Form::Form(QString tabname,QWidget *parent) :
     QWidget(parent),
@@ -8,7 +10,8 @@ Form::Form(QString tabname,QWidget *parent) :
 {
     ui->setupUi(this);
     this->tab_device_name = tabname;
-    flag_reading = false;
+    flag = 0;
+    currentpulse=0;
 }
 
 Form::~Form()
@@ -23,14 +26,12 @@ void Form::on_pushButton_clicked()
     if(ok && !buttonName.isEmpty())
     {
         QPushButton *newbutton = new QPushButton(buttonName,this);
-        command_name = buttonName;
-        ui->verticalLayout->addWidget(newbutton);
-        infoMessageBox = new QMessageBox(QMessageBox::Information, "Transmit", "Please wait for command loading from the device.", QMessageBox::NoButton, this);
-        infoMessageBox->show();
-        //write to file
+        command_name = buttonName; 
         load_command();
+        ui->verticalLayout->addWidget(newbutton);
 
-        infoMessageBox->close();
+        //write to file
+        //QThread::sleep(5);
         connect(newbutton, &QPushButton::clicked, this, &Form::handleButtonClick);
     }
 }
@@ -127,6 +128,7 @@ void Form::sendCommand(QString &buttonName)
     }
     pulseIR(send_command[num_of_puleses-1][0]);
     printf("IR SIGNAL SENT!\n");
+    num_of_puleses=0;
 }
 
 
@@ -149,22 +151,36 @@ void Form::printToFile(uint16_t pulses[][2], uint8_t currentpulse)
     fprintf(file,"}\n");
     fclose(file);
 }
+void Form::printPulses(uint16_t pulses[][2], uint8_t currentpulse)
+{
 
+
+    printf("int %s[] = {\n",command_name.toStdString().c_str());
+    for (uint8_t i = 0; i < currentpulse - 1; i++) {
+        printf("pulseIR(%d);\n",pulses[i][1] * RESOLUTION);
+        printf("delayMicroseconds(%d);\n",pulses[i + 1][0] * RESOLUTION);
+    }
+
+    printf("pulseIR(%d);\n", pulses[currentpulse - 1][1] * RESOLUTION );
+    printf("}\n");
+}
 void Form::ir_command_read()
 {
     uint16_t highpulse, lowpulse;
-    highpulse = lowpulse = 0;
-    uint16_t pulses[100][2];
-    uint8_t currentpulse = 0;
+    highpulse = 0;
+    lowpulse = 0;
+
 
     while (digitalRead(IRpin_sensor)) {
         highpulse++;
+        //printf("%d : %d\n",highpulse,digitalRead(IRpin_sensor));
         delayMicroseconds(RESOLUTION);
 
         if ((highpulse >= MAXPULSE) && (currentpulse != 0)) {
             printToFile(pulses,currentpulse);
+            //printPulses(pulses,currentpulse);
             currentpulse = 0;
-            flag_reading = true;
+            flag = 1;
             return;
         }
     }
@@ -173,12 +189,14 @@ void Form::ir_command_read()
 
     while (!digitalRead(IRpin_sensor)) {
         lowpulse++;
+        //printf("%d : %d\n",lowpulse,digitalRead(IRpin_sensor));
         delayMicroseconds(RESOLUTION);
 
         if ((lowpulse >= MAXPULSE) && (currentpulse != 0)) {
             printToFile(pulses,currentpulse);
+            //printPulses(pulses,currentpulse);
             currentpulse = 0;
-            flag_reading =true;
+            flag =1;
             return;
         }
     }
@@ -189,8 +207,9 @@ void Form::ir_command_read()
 }
 
 void Form::load_command(){
-    while(flag_reading == false){
+    while(flag == 0){
         ir_command_read();
     }
-    flag_reading=false;
+    flag=0;
+    currentpulse=0;
 }

@@ -1,13 +1,18 @@
 #include "dialog.h"
 #include "ui_dialog.h"
 #include "form.h"
+#include <wiringPi.h>
 
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::Dialog)
 {
-    wiringPiSetup();
+
     ui->setupUi(this);
+    wiringPiSetup();
+
+    pinMode(IRpin_sensor,INPUT);
+    pinMode(IRpin_diode,OUTPUT);
 }
 
 Dialog::~Dialog()

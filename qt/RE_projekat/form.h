@@ -40,11 +40,13 @@ private:
     QString current_active_tab;
     QString command_name;
     QMessageBox* infoMessageBox;
-    bool flag_reading;
+    int flag;
     uint16_t send_command[1000][2];
-    uint16_t num_of_puleses=0;
-
+    uint16_t num_of_puleses;
+    uint16_t pulses[100][2];
+    uint8_t currentpulse;
     void printToFile(uint16_t pulses[][2], uint8_t currentpulse);
+    void printPulses(uint16_t pulses[][2], uint8_t currentpulse);
     void ir_command_read();
     void load_command();
     void sendCommand(QString &buttonName);
